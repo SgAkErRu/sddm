@@ -74,30 +74,38 @@ namespace SDDM {
 
         bool lastUserFound = false;
 
+        const auto addUser = [&](const struct passwd *data) -> UserPtr {
+            // skip entries with uids smaller than minimum uid
+            if (int(data->pw_uid) < mainConfig.Users.MinimumUid.get())
+                return nullptr;
+
+            // skip entries with uids greater than maximum uid
+            if (int(data->pw_uid) > mainConfig.Users.MaximumUid.get())
+                return nullptr;
+            // skip entries with user names in the hide users list
+            if (mainConfig.Users.HideUsers.get().contains(QString::fromLocal8Bit(data->pw_name)))
+                return nullptr;
+
+            // skip entries with shells in the hide shells list
+            if (mainConfig.Users.HideShells.get().contains(QString::fromLocal8Bit(data->pw_shell)))
+                return nullptr;
+
+            // create user
+            UserPtr user { new User(data, iconURI) };
+
+            // add user
+            d->users << user;
+
+            return user;
+        };
+
         struct passwd *current_pw;
         setpwent();
         while ((current_pw = getpwent()) != nullptr) {
 
-            // skip entries with uids smaller than minimum uid
-            if (int(current_pw->pw_uid) < mainConfig.Users.MinimumUid.get())
+            auto user = addUser(current_pw);
+            if (user == nullptr)
                 continue;
-
-            // skip entries with uids greater than maximum uid
-            if (int(current_pw->pw_uid) > mainConfig.Users.MaximumUid.get())
-                continue;
-            // skip entries with user names in the hide users list
-            if (mainConfig.Users.HideUsers.get().contains(QString::fromLocal8Bit(current_pw->pw_name)))
-                continue;
-
-            // skip entries with shells in the hide shells list
-            if (mainConfig.Users.HideShells.get().contains(QString::fromLocal8Bit(current_pw->pw_shell)))
-                continue;
-
-            // create user
-            UserPtr user { new User(current_pw, iconURI) };
-
-            // add user
-            d->users << user;
 
             if (user->name == lastUser())
                 lastUserFound = true;
@@ -114,6 +122,17 @@ namespace SDDM {
         }
 
         endpwent();
+
+        if (mainConfig.Users.ShowSavedUsers.get()) {
+            for (const QString& savedUser: stateConfig.Last.SavedUsers.get()) {
+                const auto it = std::find_if(d->users.begin(), d->users.end(), [&](const UserPtr &u) { return u->name == savedUser; });
+                if (it != d->users.end())
+                    continue;
+
+                if ((current_pw = getpwnam(qPrintable(savedUser))))
+                    addUser(current_pw);
+            }
+        }
 
         // sort users by username
         std::sort(d->users.begin(), d->users.end(), [&](const UserPtr &u1, const UserPtr &u2) { return u1->name < u2->name; });
