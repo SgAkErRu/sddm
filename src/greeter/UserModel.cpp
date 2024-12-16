@@ -74,38 +74,38 @@ namespace SDDM {
 
         bool lastUserFound = false;
 
-        const auto addUser = [&](const struct passwd *data) -> UserPtr {
+        const auto checkUser = [&](const struct passwd *data) -> bool {
             // skip entries with uids smaller than minimum uid
             if (int(data->pw_uid) < mainConfig.Users.MinimumUid.get())
-                return nullptr;
+                return false;
 
             // skip entries with uids greater than maximum uid
             if (int(data->pw_uid) > mainConfig.Users.MaximumUid.get())
-                return nullptr;
+                return false;
+
             // skip entries with user names in the hide users list
             if (mainConfig.Users.HideUsers.get().contains(QString::fromLocal8Bit(data->pw_name)))
-                return nullptr;
+                return false;
 
             // skip entries with shells in the hide shells list
             if (mainConfig.Users.HideShells.get().contains(QString::fromLocal8Bit(data->pw_shell)))
-                return nullptr;
+                return false;
 
-            // create user
-            UserPtr user { new User(data, iconURI) };
-
-            // add user
-            d->users << user;
-
-            return user;
+            return true;
         };
 
         struct passwd *current_pw;
         setpwent();
         while ((current_pw = getpwent()) != nullptr) {
 
-            auto user = addUser(current_pw);
-            if (user == nullptr)
+            if (!checkUser(current_pw))
                 continue;
+
+            // create user
+            UserPtr user { new User(current_pw, iconURI) };
+
+            // add user
+            d->users << user;
 
             if (user->name == lastUser())
                 lastUserFound = true;
@@ -129,8 +129,8 @@ namespace SDDM {
                 if (it != d->users.end())
                     continue;
 
-                if ((current_pw = getpwnam(qPrintable(savedUser))))
-                    addUser(current_pw);
+                if ((current_pw = getpwnam(qPrintable(savedUser))) && checkUser(current_pw))
+                    d->users << UserPtr(new User(current_pw, iconURI));
             }
         }
 
