@@ -66,7 +66,7 @@ namespace SDDM {
         enum Info {
             INFO_NONE = 0,
             INFO_UNKNOWN,
-            INFO_PASS_CHANGE_REQUIRED,
+            INFO_PAM_CONV,
             _INFO_LAST
         };
         Q_ENUM(Info)
@@ -74,6 +74,7 @@ namespace SDDM {
         enum Error {
             ERROR_NONE = 0,
             ERROR_UNKNOWN,
+            ERROR_PAM_CONV,
             ERROR_AUTHENTICATION,
             ERROR_INTERNAL,
             _ERROR_LAST

@@ -304,17 +304,17 @@ namespace SDDM {
             return PAM_CONV_ERR;
 
         for (int i = 0; i < n; i++) {
+            const QString convMsg = QString::fromLocal8Bit(msg[i]->msg);
             switch(msg[i]->msg_style) {
                 case PAM_PROMPT_ECHO_OFF:
                 case PAM_PROMPT_ECHO_ON:
                     newRequest = m_data->insertPrompt(msg[i], n == 1);
                     break;
                 case PAM_ERROR_MSG:
-                    m_app->error(QString::fromLocal8Bit(msg[i]->msg), Auth::ERROR_AUTHENTICATION);
+                    m_app->error(convMsg, Auth::ERROR_PAM_CONV);
                     break;
                 case PAM_TEXT_INFO:
-                    // if there's only the info message, let's predict the prompts too
-                    m_app->info(QString::fromLocal8Bit(msg[i]->msg), m_data->handleInfo(msg[i], n == 1));
+                    m_app->info(convMsg, Auth::INFO_PAM_CONV);
                     break;
                 default:
                     break;

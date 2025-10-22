@@ -158,6 +158,9 @@ namespace SDDM {
         // connect login result signals
         connect(this, &Display::loginFailed, m_socketServer, &SocketServer::loginFailed);
         connect(this, &Display::loginSucceeded, m_socketServer, &SocketServer::loginSucceeded);
+        // pam (conversation) info/error shown in greeter
+        // TODO: type of message for greeter - info or error
+        connect(this, &Display::informationMessage, m_socketServer, &SocketServer::informationMessage);
 
         connect(m_greeter, &Greeter::failed, this, &Display::stop);
         connect(m_greeter, &Greeter::ttyFailed, this, [this] {
@@ -524,7 +527,10 @@ namespace SDDM {
         if (!m_socket)
             return;
 
-        m_socketServer->informationMessage(m_socket, message);
+        if (info == Auth::INFO_PAM_CONV) {
+            // send pam conversation message to greeter
+            emit informationMessage(m_socket, message);
+        }
     }
 
     void Display::slotAuthError(const QString &message, Auth::Error error) {
@@ -533,9 +539,11 @@ namespace SDDM {
         if (!m_socket)
             return;
 
-        m_socketServer->informationMessage(m_socket, message);
-        if (error == Auth::ERROR_AUTHENTICATION)
+        if (error == Auth::ERROR_AUTHENTICATION) {
             emit loginFailed(m_socket);
+        } else if (error == Auth::ERROR_PAM_CONV) {
+            emit informationMessage(m_socket, message);
+        }
     }
 
     void Display::slotHelperFinished(Auth::HelperExitStatus status) {
