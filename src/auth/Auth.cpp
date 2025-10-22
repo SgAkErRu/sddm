@@ -57,6 +57,7 @@ namespace SDDM {
         void dataPending();
         void childExited(int exitCode, QProcess::ExitStatus exitStatus);
         void childError(QProcess::ProcessError error);
+        void cancelPamConv();
         void requestFinished();
     public:
         AuthRequest *request { nullptr };
@@ -134,6 +135,7 @@ namespace SDDM {
         child->setProcessEnvironment(env);
         connect(child, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), this, &Auth::Private::childExited);
         connect(child, &QProcess::errorOccurred, this, &Auth::Private::childError);
+        connect(request, &AuthRequest::canceled, this, &Auth::Private::cancelPamConv);
         connect(request, &AuthRequest::finished, this, &Auth::Private::requestFinished);
         connect(request, &AuthRequest::promptsChanged, parent, &Auth::requestChanged);
     }
@@ -236,6 +238,13 @@ namespace SDDM {
     void Auth::Private::childError(QProcess::ProcessError error) {
         Q_UNUSED(error);
         Q_EMIT qobject_cast<Auth*>(parent())->error(child->errorString(), ERROR_INTERNAL);
+    }
+
+    void Auth::Private::cancelPamConv() {
+        SafeDataStream str(socket);
+        str << CANCEL;
+        str.send();
+        request->setRequest();
     }
 
     void Auth::Private::requestFinished() {

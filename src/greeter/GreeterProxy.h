@@ -63,6 +63,7 @@ namespace SDDM {
         void hybridSleep();
 
         void login(const QString &user, const QString &password, const int sessionIndex) const;
+        void cancelPamConv();
 
     private slots:
         void connected();

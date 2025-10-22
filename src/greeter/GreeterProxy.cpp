@@ -127,6 +127,11 @@ namespace SDDM {
         SocketWriter(d->socket) << quint32(GreeterMessages::Login) << user << password << session;
     }
 
+    void GreeterProxy::cancelPamConv() {
+        // send command to daemon (to pam conv() in backend)
+        SocketWriter(d->socket) << quint32(GreeterMessages::PamCancel);
+    }
+
     void GreeterProxy::connected() {
         // log connection
         qDebug() << "Connected to the daemon.";

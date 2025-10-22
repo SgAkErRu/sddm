@@ -144,6 +144,11 @@ namespace SDDM {
                     emit login(socket, user, password, session);
                 }
                 break;
+                case GreeterMessages::PamCancel: {
+                    // emit signal
+                    emit cancelPamConv();
+                }
+                break;
                 case GreeterMessages::PowerOff: {
                     // log message
                     qDebug() << "Message received from greeter: PowerOff";

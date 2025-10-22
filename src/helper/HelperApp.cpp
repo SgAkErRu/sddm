@@ -213,15 +213,26 @@ namespace SDDM {
 
     Request HelperApp::request(const Request& request) {
         Msg m = Msg::MSG_UNKNOWN;
-        Request response;
+        Request response {};
         SafeDataStream str(m_socket);
         str << Msg::REQUEST << request;
         str.send();
         str.receive();
-        str >> m >> response;
-        if (m != REQUEST) {
-            response = Request();
-            qCritical() << "Received a wrong opcode instead of REQUEST:" << m;
+        str >> m;
+        switch (m) {
+            // user response from daemon (greeter)
+            case REQUEST:
+                str >> response;
+                qDebug() << "HelperApp: daemon response received";
+                break;
+            // password change canceled in greeter
+            case CANCEL:
+                qDebug() << "HelperApp: Message received from daemon: CANCEL";
+                // terminate user session in Auth (QProcess child)
+                m_session->terminate();
+                break;
+            default:
+                qCritical() << "HelperApp: Received a wrong opcode instead of REQUEST or CANCEL:" << m;
         }
         return response;
     }

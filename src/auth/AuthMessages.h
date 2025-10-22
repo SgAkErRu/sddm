@@ -95,6 +95,7 @@ namespace SDDM {
         ERROR,
         INFO,
         REQUEST,
+        CANCEL,
         AUTHENTICATED,
         SESSION_STATUS,
         DISPLAY_SERVER_STARTED,

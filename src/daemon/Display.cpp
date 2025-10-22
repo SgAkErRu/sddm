@@ -154,6 +154,7 @@ namespace SDDM {
 
         // connect login signal
         connect(m_socketServer, &SocketServer::login, this, &Display::login);
+        connect(m_socketServer, &SocketServer::cancelPamConv, this, &Display::cancelPamConv);
 
         // connect login result signals
         connect(this, &Display::loginFailed, m_socketServer, &SocketServer::loginFailed);
@@ -346,6 +347,11 @@ namespace SDDM {
 
         // authenticate
         startAuth(user, password, session);
+    }
+    // cancel pam (like password change) conversation
+    // because user canceled pam conv dialog in greeter
+    void Display::cancelPamConv() {
+        m_auth->request()->cancel();
     }
 
     QString Display::findGreeterTheme() const {

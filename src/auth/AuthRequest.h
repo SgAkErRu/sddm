@@ -73,12 +73,16 @@ namespace SDDM {
         * Call this slot when all prompts has been filled to your satisfaction
         */
         void done();
+        /**
+        * Call this slot when user canceled PAM conversation
+        */
+        void cancel();
     Q_SIGNALS:
         /**
         * Emitted when \ref done was called
         */
         void finished();
-
+        void canceled();
         void finishAutomaticallyChanged();
         void promptsChanged();
     private:

@@ -72,6 +72,7 @@ namespace SDDM {
         void login(QLocalSocket *socket,
                    const QString &user, const QString &password,
                    const Session &session);
+        void cancelPamConv();
         void displayServerStarted();
 
     signals:

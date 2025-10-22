@@ -55,6 +55,7 @@ namespace SDDM {
                    const QString &user, const QString &password,
                    const Session &session);
         void connected();
+        void cancelPamConv();
 
     private:
         QLocalServer *m_server { nullptr };
