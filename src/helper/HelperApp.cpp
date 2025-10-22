@@ -217,6 +217,7 @@ namespace SDDM {
         SafeDataStream str(m_socket);
         str << Msg::REQUEST << request;
         str.send();
+        m_socket->waitForBytesWritten();
         str.receive();
         str >> m;
         switch (m) {
@@ -243,6 +244,7 @@ namespace SDDM {
         SafeDataStream str(m_socket);
         str << Msg::AUTHENTICATED << user;
         str.send();
+        m_socket->waitForBytesWritten();
         if (user.isEmpty())
             return env;
         str.receive();
@@ -260,6 +262,7 @@ namespace SDDM {
         SafeDataStream str(m_socket);
         str << Msg::SESSION_STATUS << success;
         str.send();
+        m_socket->waitForBytesWritten();
         str.receive();
         str >> m;
         if (m != SESSION_STATUS) {
@@ -273,6 +276,7 @@ namespace SDDM {
         SafeDataStream str(m_socket);
         str << Msg::DISPLAY_SERVER_STARTED << displayName;
         str.send();
+        m_socket->waitForBytesWritten();
         str.receive();
         str >> m;
         if (m != DISPLAY_SERVER_STARTED) {
