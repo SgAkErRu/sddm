@@ -193,14 +193,20 @@ namespace SDDM {
     }
 
     void SocketServer::loginFailed(QLocalSocket *socket) {
-        SocketWriter(socket) << quint32(DaemonMessages::LoginFailed);
+        if (socket && socket->isValid()) {
+            SocketWriter(socket) << quint32(DaemonMessages::LoginFailed);
+        }
     }
 
     void SocketServer::loginSucceeded(QLocalSocket *socket) {
-        SocketWriter(socket) << quint32(DaemonMessages::LoginSucceeded);
+        if (socket && socket->isValid()) {
+            SocketWriter(socket) << quint32(DaemonMessages::LoginSucceeded);
+        }
     }
 
     void SocketServer::informationMessage(QLocalSocket *socket, const QString &message) {
-        SocketWriter(socket) << quint32(DaemonMessages::InformationMessage) << message;
+        if (socket && socket->isValid()) {
+            SocketWriter(socket) << quint32(DaemonMessages::InformationMessage) << message;
+        }
     }
 }
