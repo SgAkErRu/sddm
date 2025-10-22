@@ -23,6 +23,9 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QProcessEnvironment>
+
+#include "PamWorkState.h"
+
 #include <security/pam_appl.h>
 
 namespace SDDM {
@@ -49,7 +52,7 @@ namespace SDDM {
         * ctor
         * \param parent parent backend
         */
-        explicit PamHandle(PamBackend *parent = 0);
+        explicit PamHandle(PamBackend *parent);
 
         virtual ~PamHandle();
 
@@ -58,6 +61,11 @@ namespace SDDM {
          * \sa openSession
          */
         bool isOpen() const;
+
+        /**
+         * Returns current PAM work state.
+         */
+        PamWorkState workState() const;
 
         /**
         * pam_set_item - set and update PAM informations
@@ -190,6 +198,7 @@ namespace SDDM {
 
         int m_silent { 0 }; ///< flag mask for silence of the contained calls
 
+        PamWorkState m_workState = { STATE_INITIAL }; ///< internal PAM work state
         struct pam_conv m_conv; ///< the current conversation
         pam_handle_t *m_handle { nullptr }; ///< the actual PAM handle
         int m_result { 0 }; ///< PAM result

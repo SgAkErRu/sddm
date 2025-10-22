@@ -1,6 +1,7 @@
 /*
  * PAM API Qt wrapper
- * Copyright (C) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2018 Thomas Höhn <thomas_hoehn@gmx.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,9 +84,12 @@ namespace SDDM {
     }
 
     bool PamHandle::acctMgmt(int flags) {
+        if (m_workState == STATE_AUTHENTICATED) {
+            m_workState = STATE_AUTHORIZE;
+        }
         m_result = pam_acct_mgmt(m_handle, flags | m_silent);
         if (m_result == PAM_NEW_AUTHTOK_REQD) {
-            // TODO see if this should really return the value or just true regardless of the outcome
+            m_workState = STATE_CHANGEAUTHTOK;
             return chAuthTok(PAM_CHANGE_EXPIRED_AUTHTOK);
         }
         else if (m_result != PAM_SUCCESS) {
@@ -107,8 +111,13 @@ namespace SDDM {
      */
     bool PamHandle::authenticate(int flags) {
         qDebug() << "[PAM] Authenticating...";
+        if (m_workState == STATE_STARTED) {
+            m_workState = STATE_AUTHENTICATE;
+        }
         m_result = pam_authenticate(m_handle, flags | m_silent);
-        if (m_result != PAM_SUCCESS) {
+        if (m_result == PAM_SUCCESS) {
+            m_workState = STATE_AUTHENTICATED;
+        } else {
             qWarning() << "[PAM] authenticate:" << pam_strerror(m_handle, m_result);
         }
         qDebug() << "[PAM] returning.";
@@ -127,7 +136,9 @@ namespace SDDM {
      */
     bool PamHandle::setCred(int flags) {
         m_result = pam_setcred(m_handle, flags | m_silent);
-        if (m_result != PAM_SUCCESS) {
+        if (m_result == PAM_SUCCESS && m_workState == STATE_AUTHENTICATED) {
+            m_workState = STATE_CREDITED;
+        } else if (m_result != PAM_SUCCESS) {
             qWarning() << "[PAM] setCred:" << pam_strerror(m_handle, m_result);
         }
         return m_result == PAM_SUCCESS;
@@ -135,7 +146,9 @@ namespace SDDM {
 
     bool PamHandle::openSession() {
         m_result = pam_open_session(m_handle, m_silent);
-        if (m_result != PAM_SUCCESS) {
+        if (m_result == PAM_SUCCESS && m_workState == STATE_CREDITED) {
+            m_workState = STATE_SESSION_STARTED;
+        } else if (m_result != PAM_SUCCESS) {
             qWarning() << "[PAM] openSession:" << pam_strerror(m_handle, m_result);
         }
         m_open = m_result == PAM_SUCCESS;
@@ -147,11 +160,16 @@ namespace SDDM {
         if (m_result != PAM_SUCCESS) {
             qWarning() << "[PAM] closeSession:" << pam_strerror(m_handle, m_result);
         }
+        m_workState = STATE_FINISHED;
         return m_result == PAM_SUCCESS;
     }
 
     bool PamHandle::isOpen() const {
         return m_open;
+    }
+
+    PamWorkState PamHandle::workState() const {
+        return m_workState;
     }
 
     bool PamHandle::setItem(int item_type, const void* item) {
@@ -191,16 +209,17 @@ namespace SDDM {
      * \li PAM_SUCCESS
      */
     bool PamHandle::start(const QString &service, const QString &user) {
+        qDebug() << "[PAM] Starting...";
+        qDebug() << "[PAM] pam_start( service =" << service << ", user =" << user << ")";
         if (user.isEmpty())
             m_result = pam_start(qPrintable(service), NULL, &m_conv, &m_handle);
         else
             m_result = pam_start(qPrintable(service), qPrintable(user), &m_conv, &m_handle);
-        if (m_result != PAM_SUCCESS) {
+        if (m_result == PAM_SUCCESS) {
+            m_workState = STATE_STARTED;
+        } else {
             qWarning() << "[PAM] start" << pam_strerror(m_handle, m_result);
             return false;
-        }
-        else {
-            qDebug() << "[PAM] Starting...";
         }
         return true;
     }
@@ -209,6 +228,8 @@ namespace SDDM {
         if (!m_handle)
             return false;
         m_result = pam_end(m_handle, m_silent | flags);
+        // pam finished, ignore rc
+        m_workState = STATE_FINISHED;
         if (m_result != PAM_SUCCESS) {
             qWarning() << "[PAM] end:" << pam_strerror(m_handle, m_result);
             return false;
