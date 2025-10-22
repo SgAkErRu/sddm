@@ -61,6 +61,18 @@ namespace SDDM {
         return env;
     }
 
+    /** \note pam_chauthtok results:
+     *
+     * \li PAM_AUTHTOK_ERR
+     * \li PAM_AUTHTOK_RECOVERY_ERR
+     * \li PAM_AUTHTOK_LOCK_BUSY
+     * \li PAM_AUTHTOK_DISABLE_AGING
+     * \li PAM_PERM_DENIED
+     * \li PAM_TRY_AGAIN
+     * \li PAM_MAXTRIES
+     * \li PAM_USER_UNKNOWN
+     * \li PAM_SUCCESS
+     */
     bool PamHandle::chAuthTok(int flags) {
         m_result = pam_chauthtok(m_handle, flags | m_silent);
         if (m_result != PAM_SUCCESS) {
@@ -82,6 +94,16 @@ namespace SDDM {
         return true;
     }
 
+    /** \note pam_authenticate results:
+     *
+     * \li PAM_ABORT
+     * \li PAM_AUTH_ERR
+     * \li PAM_CRED_INSUFFICIENT
+     * \li PAM_AUTHINFO_UNVAIL
+     * \li PAM_MAXTRIES
+     * \li PAM_USER_UNKNOWN
+     * \li PAM_SUCCESS
+     */
     bool PamHandle::authenticate(int flags) {
         qDebug() << "[PAM] Authenticating...";
         m_result = pam_authenticate(m_handle, flags | m_silent);
@@ -92,6 +114,16 @@ namespace SDDM {
         return m_result == PAM_SUCCESS;
     }
 
+    /** \note pam_setcred results:
+     *
+     * \li PAM_BUF_ERR
+     * \li PAM_CRED_ERR
+     * \li PAM_CRED_EXPIRED
+     * \li PAM_CRED_UNAVAIL
+     * \li PAM_SYSTEM_ERR
+     * \li PAM_USER_UNKNOWN
+     * \li PAM_SUCCESS
+     */
     bool PamHandle::setCred(int flags) {
         m_result = pam_setcred(m_handle, flags | m_silent);
         if (m_result != PAM_SUCCESS) {
@@ -138,12 +170,25 @@ namespace SDDM {
         return item;
     }
 
+    /** \note converse results:
+     *
+     * \li PAM_BUF_ERR
+     * \li PAM_CONV_ERR
+     * \li PAM_SUCCESS
+     */
     int PamHandle::converse(int n, const struct pam_message **msg, struct pam_response **resp, void *data) {
         qDebug() << "[PAM] Preparing to converse...";
         PamBackend *c = static_cast<PamBackend *>(data);
         return c->converse(n, msg, resp);
     }
 
+    /** \note pam_start results:
+     *
+     * \li PAM_ABORT
+     * \li PAM_BUF_ERR
+     * \li PAM_SYSTEM_ERR
+     * \li PAM_SUCCESS
+     */
     bool PamHandle::start(const QString &service, const QString &user) {
         if (user.isEmpty())
             m_result = pam_start(qPrintable(service), NULL, &m_conv, &m_handle);
