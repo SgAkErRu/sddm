@@ -21,8 +21,8 @@
 #if !defined(PAMBACKEND_H)
 #define PAMBACKEND_H
 
-#include "Constants.h"
 #include "AuthMessages.h"
+#include "PamWorkState.h"
 #include "../Backend.h"
 
 #include <QtCore/QObject>
@@ -36,19 +36,18 @@ namespace SDDM {
     public:
         PamData();
 
-        bool insertPrompt(const struct pam_message *msg, bool predict = true);
-        Auth::Info handleInfo(const struct pam_message *msg, bool predict);
+        bool insertPrompt(const struct pam_message *msg, PamWorkState workState, bool predict = true);
 
         const Request& getRequest() const;
         void completeRequest(const Request& request);
 
-        QByteArray getResponse(const struct pam_message *msg);
+        QByteArray getResponse(const struct pam_message *msg, PamWorkState workState);
 
     private:
-        AuthPrompt::Type detectPrompt(const struct pam_message *msg) const;
+        AuthPrompt::Type detectPrompt(const struct pam_message *msg, PamWorkState workState) const;
 
-        const Prompt& findPrompt(const struct pam_message *msg) const;
-        Prompt& findPrompt(const struct pam_message *msg);
+        const Prompt& findPrompt(const struct pam_message *msg, PamWorkState workState) const;
+        Prompt& findPrompt(const struct pam_message *msg, PamWorkState workState);
 
         bool m_sent { false };
         Request m_currentRequest { };
