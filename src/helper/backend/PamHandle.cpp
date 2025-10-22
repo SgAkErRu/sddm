@@ -76,7 +76,8 @@ namespace SDDM {
     bool PamHandle::chAuthTok(int flags) {
         m_result = pam_chauthtok(m_handle, flags | m_silent);
         if (m_result != PAM_SUCCESS) {
-            qWarning() << "[PAM] chAuthTok:" << pam_strerror(m_handle, m_result);
+            QString errmsg = QString::fromLocal8Bit(pam_strerror(m_handle, m_result));
+            qWarning() << "[PAM] chAuthTok:" << errmsg << ", rc =" << m_result;
         }
         return m_result == PAM_SUCCESS;
     }
