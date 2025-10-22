@@ -1,6 +1,7 @@
 /*
  * Qt Authentication library
- * Copyright (C) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2018 Thomas Höhn <thomas_hoehn@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +25,8 @@
 #include <QtCore/QObject>
 
 #include <QtQml/QQmlListProperty>
+
+#include <AuthPrompt.h>
 
 namespace SDDM {
     class Auth;
@@ -63,11 +66,29 @@ namespace SDDM {
         * @return list of the contained prompts
         */
         QQmlListProperty<AuthPrompt> promptsDecl();
+        /**
+          * @brief Write responses into request for pam conv(),
+          * for AuthPrompt::LOGIN_USER,LOGIN_PASSWORD,CHANGE_PASSWORD
+          * @return true if response was set
+          */
+        Q_INVOKABLE bool setLoginResponse(const QString &username, const QString &password);
+        Q_INVOKABLE bool setChangeResponse(const QString &password);
 
         static AuthRequest *empty();
 
         bool finishAutomatically();
+        /**
+         * @brief Trigger slot done() automaticly when all AuthPrompt responses (user passwords) are set.
+         * @param value  if true done() automaticly called, if false user calls done() after specifying all responses
+         */
         void setFinishAutomatically(bool value);
+        /**
+         * @brief find prompt with specified type
+         * @param type \ref AuthPrompt::Type
+         * @return pointer to prompt of that type
+         */
+        AuthPrompt *findPrompt(AuthPrompt::Type type) const;
+
     public Q_SLOTS:
         /**
         * Call this slot when all prompts has been filled to your satisfaction

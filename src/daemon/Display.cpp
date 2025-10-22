@@ -1,4 +1,5 @@
 /***************************************************************************
+* Copyright (c) 2018 Thomas Höhn <thomas_hoehn@gmx.net>
 * Copyright (c) 2014-2015 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
 * Copyright (c) 2014 Martin Bříza <mbriza@redhat.com>
 * Copyright (c) 2013 Abdurrahman AVCI <abdurrahmanavci@gmail.com>
@@ -571,15 +572,40 @@ namespace SDDM {
             stop();
     }
 
+    /* got new request (with prompts) from pam conv(), e.g. for expired pwd
+     * which requires response from greeter UI (new password) */
     void Display::slotRequestChanged() {
-        if (m_auth->request()->prompts().length() == 1) {
-            m_auth->request()->prompts()[0]->setResponse(qPrintable(m_passPhrase));
-            m_auth->request()->done();
-        } else if (m_auth->request()->prompts().length() == 2) {
-            m_auth->request()->prompts()[0]->setResponse(qPrintable(m_auth->user()));
-            m_auth->request()->prompts()[1]->setResponse(qPrintable(m_passPhrase));
-            m_auth->request()->done();
+
+        const int n_prompts = m_auth->request()->prompts().length();
+
+        // ignore empty requests
+        if (n_prompts <= 0) {
+            return;
         }
+
+        // see what we got from pam conv() and will be send to greeter
+        qDebug() << "Display: requestChanged with " << n_prompts << " prompts from Auth";
+
+        // handle password change case (gets response from greeter),
+        // will finish with request->done() later in pamResponse()
+        if (auto prompt = m_auth->request()->findPrompt(AuthPrompt::CHANGE_PASSWORD)) {
+            if (m_socket) {
+                // TODO send password change request to greeter (via SocketServer)
+            }
+            return;
+        }
+
+        // handle requests with user name and password prompts, respond to login password request
+        if ((m_auth->request()->findPrompt(AuthPrompt::LOGIN_USER) ||
+             m_auth->request()->findPrompt(AuthPrompt::LOGIN_PASSWORD)) &&
+             m_auth->request()->setLoginResponse(m_auth->user(), m_passPhrase) == true)
+        {
+             m_auth->request()->done();
+             return;
+        }
+
+        qWarning() << "Display: Unable to handle Auth request!";
+        m_auth->request()->cancel();
     }
 
     void Display::slotSessionStarted(bool success) {

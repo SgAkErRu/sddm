@@ -1,6 +1,7 @@
 /*
  * Qt Authentication Library
- * Copyright (C) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2013 Martin Bříza <mbriza@redhat.com>
+ * Copyright (c) 2018 Thomas Höhn <thomas_hoehn@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -112,6 +113,45 @@ namespace SDDM {
             r.prompts << p;
         }
         return r;
+    }
+
+    AuthPrompt *AuthRequest::findPrompt(AuthPrompt::Type type) const {
+        for (AuthPrompt* qap : std::as_const(d->prompts)) {
+            if (qap->type() == type)
+                return qap;
+        }
+        return nullptr;
+    }
+
+    bool AuthRequest::setLoginResponse(const QString &username, const QString &password) {
+        AuthPrompt* prompt = nullptr;
+
+        if (!username.isNull()) {
+            prompt = findPrompt(AuthPrompt::LOGIN_USER);
+            if (prompt) prompt->setResponse(qPrintable(username));
+        }
+        if (!password.isNull()) {
+            prompt = findPrompt(AuthPrompt::LOGIN_PASSWORD);
+            if (prompt) prompt->setResponse(qPrintable(password));
+        }
+        if (prompt)
+            return true;
+
+        return false;
+    }
+
+    bool AuthRequest::setChangeResponse(const QString &password) {
+        AuthPrompt* prompt = nullptr;
+
+        if (!password.isNull()) {
+            prompt = findPrompt(AuthPrompt::CHANGE_PASSWORD);
+            if (prompt) {
+                prompt->setResponse(qPrintable(password));
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
