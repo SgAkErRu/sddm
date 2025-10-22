@@ -162,6 +162,7 @@ namespace SDDM {
         // TODO: type of message for greeter - info or error
         connect(this, &Display::informationMessage, m_socketServer, &SocketServer::informationMessage);
 
+        connect(m_greeter, &Greeter::stopped, this, &Display::slotGreeterStopped);
         connect(m_greeter, &Greeter::failed, this, &Display::stop);
         connect(m_greeter, &Greeter::ttyFailed, this, [this] {
             ++s_ttyFailures;
@@ -572,5 +573,12 @@ namespace SDDM {
         if (success) {
             QTimer::singleShot(5000, m_greeter, &Greeter::stop);
         }
+    }
+
+    // inform daemon if greeter stopped, so we dont forward
+    // errors or infos etc. through invalid socket
+    void Display::slotGreeterStopped() {
+        qDebug() << "Display: Greeter was stopped";
+        m_socket = nullptr;
     }
 }

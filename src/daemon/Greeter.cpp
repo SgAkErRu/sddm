@@ -264,6 +264,8 @@ namespace SDDM {
         } else {
             m_auth->stop();
         }
+
+        emit stopped();
     }
 
     void Greeter::finished() {
@@ -282,6 +284,8 @@ namespace SDDM {
             m_process->deleteLater();
             m_process = nullptr;
         }
+
+        emit stopped();
     }
 
     void Greeter::onRequestChanged() {
@@ -330,6 +334,8 @@ namespace SDDM {
         } else if (status == Auth::HELPER_SESSION_ERROR) {
             Q_EMIT failed();
         }
+
+        emit stopped();
     }
 
     bool Greeter::isRunning() const {

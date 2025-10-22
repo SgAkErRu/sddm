@@ -63,6 +63,7 @@ namespace SDDM {
     signals:
         void ttyFailed();
         void failed();
+        void stopped();
         void displayServerFailed();
 
     private:
