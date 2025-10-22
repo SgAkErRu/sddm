@@ -144,6 +144,14 @@ namespace SDDM {
                     emit login(socket, user, password, session);
                 }
                 break;
+                case GreeterMessages::PamResponse: {
+                    QString response;
+                    input >> response;
+
+                    // emit signal
+                    emit pamResponse(response);
+                }
+                break;
                 case GreeterMessages::PamCancel: {
                     // emit signal
                     emit cancelPamConv();
@@ -212,6 +220,12 @@ namespace SDDM {
     void SocketServer::informationMessage(QLocalSocket *socket, const QString &message) {
         if (socket && socket->isValid()) {
             SocketWriter(socket) << quint32(DaemonMessages::InformationMessage) << message;
+        }
+    }
+
+    void SocketServer::pamRequest(QLocalSocket *socket, const QString &message) {
+        if (socket && socket->isValid()) {
+            SocketWriter(socket) << quint32(DaemonMessages::PamRequest) << message;
         }
     }
 }

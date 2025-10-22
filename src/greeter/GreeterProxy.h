@@ -63,6 +63,7 @@ namespace SDDM {
         void hybridSleep();
 
         void login(const QString &user, const QString &password, const int sessionIndex) const;
+        void pamResponse(const QString &response);
         void cancelPamConv();
 
     private slots:
@@ -73,6 +74,7 @@ namespace SDDM {
 
     signals:
         void informationMessage(const QString &message);
+        void pamRequest(const QString &message);
         void hostNameChanged(const QString &hostName);
         void canPowerOffChanged(bool canPowerOff);
         void canRebootChanged(bool canReboot);

@@ -127,6 +127,11 @@ namespace SDDM {
         SocketWriter(d->socket) << quint32(GreeterMessages::Login) << user << password << session;
     }
 
+    void GreeterProxy::pamResponse(const QString &response) {
+        // send new password to daemon for pam conv
+        SocketWriter(d->socket) << quint32(GreeterMessages::PamResponse) << response;
+    }
+
     void GreeterProxy::cancelPamConv() {
         // send command to daemon (to pam conv() in backend)
         SocketWriter(d->socket) << quint32(GreeterMessages::PamCancel);
@@ -219,6 +224,16 @@ namespace SDDM {
                     emit informationMessage(message);
                 }
                 break;
+
+                case DaemonMessages::PamRequest: {
+                    QString message;
+                    input >> message;
+
+                    qDebug() << "PAM requests prompt received from daemon: " << message;
+                    emit pamRequest(message);
+                }
+                break;
+
                 default: {
                     // log message
                     qWarning() << "Unknown message received from daemon.";

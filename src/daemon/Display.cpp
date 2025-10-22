@@ -155,6 +155,8 @@ namespace SDDM {
 
         // connect login signal
         connect(m_socketServer, &SocketServer::login, this, &Display::login);
+        // pam responses and conversation cancel
+        connect(m_socketServer, &SocketServer::pamResponse, this, &Display::pamResponse);
         connect(m_socketServer, &SocketServer::cancelPamConv, this, &Display::cancelPamConv);
 
         // connect login result signals
@@ -163,6 +165,8 @@ namespace SDDM {
         // pam (conversation) info/error shown in greeter
         // TODO: type of message for greeter - info or error
         connect(this, &Display::informationMessage, m_socketServer, &SocketServer::informationMessage);
+        // new request from pam for e.g. password renewal (expired password)
+        connect(this, &Display::pamRequest, m_socketServer, &SocketServer::pamRequest);
 
         connect(m_greeter, &Greeter::stopped, this, &Display::slotGreeterStopped);
         connect(m_greeter, &Greeter::failed, this, &Display::stop);
@@ -349,6 +353,15 @@ namespace SDDM {
         // authenticate
         startAuth(user, password, session);
     }
+
+    // got pam response from greeter
+    void Display::pamResponse(const QString &response) {
+        m_auth->request()->setChangeResponse(response);
+        if (m_auth->request()->finishAutomatically() == false) {
+            m_auth->request()->done();
+        }
+    }
+
     // cancel pam (like password change) conversation
     // because user canceled pam conv dialog in greeter
     void Display::cancelPamConv() {
@@ -590,10 +603,15 @@ namespace SDDM {
         // will finish with request->done() later in pamResponse()
         if (auto prompt = m_auth->request()->findPrompt(AuthPrompt::CHANGE_PASSWORD)) {
             if (m_socket) {
-                // TODO send password change request to greeter (via SocketServer)
+                // send password change request to greeter (via SocketServer)
+                emit pamRequest(m_socket, prompt->message());
             }
             return;
         }
+
+        // TODO: now it will work only for changing password, but
+        // here we can detect non-default prompts and send pamRequest
+        // instead of default login sequence
 
         // handle requests with user name and password prompts, respond to login password request
         if ((m_auth->request()->findPrompt(AuthPrompt::LOGIN_USER) ||

@@ -47,6 +47,7 @@ namespace SDDM {
 
     public slots:
         void informationMessage(QLocalSocket *socket, const QString &message);
+        void pamRequest(QLocalSocket *socket, const QString &message);
         void loginFailed(QLocalSocket *socket);
         void loginSucceeded(QLocalSocket *socket);
 
@@ -55,6 +56,7 @@ namespace SDDM {
                    const QString &user, const QString &password,
                    const Session &session);
         void connected();
+        void pamResponse(const QString &response);
         void cancelPamConv();
 
     private:

@@ -26,6 +26,7 @@ namespace SDDM {
     enum class GreeterMessages {
         Connect = 0,
         Login,
+        PamResponse,
         PamCancel,
         PowerOff,
         Reboot,
@@ -37,6 +38,7 @@ namespace SDDM {
     enum class DaemonMessages {
         HostName,
         Capabilities,
+        PamRequest,
         LoginSucceeded,
         LoginFailed,
         InformationMessage,

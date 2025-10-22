@@ -72,6 +72,7 @@ namespace SDDM {
         void login(QLocalSocket *socket,
                    const QString &user, const QString &password,
                    const Session &session);
+        void pamResponse(const QString &response);
         void cancelPamConv();
         void displayServerStarted();
 
@@ -82,6 +83,7 @@ namespace SDDM {
         void loginFailed(QLocalSocket *socket);
         void loginSucceeded(QLocalSocket *socket);
         void informationMessage(QLocalSocket *socket, const QString &message);
+        void pamRequest(QLocalSocket *socket, const QString &message);
 
     private:
         QString findGreeterTheme() const;
