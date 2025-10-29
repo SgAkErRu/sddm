@@ -115,6 +115,7 @@ namespace SDDM {
             , child(new QProcess(this))
             , id(lastId++) {
         SocketServer::instance()->helpers[id] = this;
+#ifndef HAVE_SYSTEMD
         QProcessEnvironment env = child->processEnvironment();
         bool langEmpty = true;
         QFile localeFile(QStringLiteral("/etc/locale.conf"));
@@ -123,6 +124,7 @@ namespace SDDM {
             while (!in.atEnd()) {
                 QStringList parts = in.readLine().split(QLatin1Char('='));
                 if (parts.size() >= 2) {
+                    // TODO: value (parts[1]) has to be unquoted before inserting in env
                     env.insert(parts[0], parts[1]);
                     if (parts[0] == QLatin1String("LANG"))
                         langEmpty = false;
@@ -133,6 +135,7 @@ namespace SDDM {
         if (langEmpty)
             env.insert(QStringLiteral("LANG"), QStringLiteral("C"));
         child->setProcessEnvironment(env);
+#endif
         connect(child, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), this, &Auth::Private::childExited);
         connect(child, &QProcess::errorOccurred, this, &Auth::Private::childError);
         connect(request, &AuthRequest::canceled, this, &Auth::Private::cancelPamConv);
